@@ -6,6 +6,7 @@ AiMoney是一款类似支付宝App里的余额宝这样的一个理财产品，�
 用户的资金会存入智能合约里，交易机器人会根据策略信号调用智能合约里的资产在DEX中进行套利操作，策略结束后，系统会实时本次策略收益计算用户份额，本金与利润也会实时存在智能合约里。用户可以随时取用，也可以随时存入新的零钱。
 当前V1版本暂时只支持通过API在CEX里进行交易套利，在V2版本将会支持在DEX（Hyperliquid、Aster、Lighter等）中进行套利操作。
 
-V1 website: https://aimoney.run
+V1 website: https://aimoney.run  
+
 V2 币圈余额宝 敬请期待
 
