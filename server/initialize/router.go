@@ -40,19 +40,16 @@ func Routers() *gin.Engine {
 		Router.Use(gin.Logger())
 	}
 
-	if !global.GVA_CONFIG.MCP.Separate {
+	sseServer := McpRun()
 
-		sseServer := McpRun()
+	// 注册mcp服务
+	Router.GET(global.GVA_CONFIG.MCP.SSEPath, func(c *gin.Context) {
+		sseServer.SSEHandler().ServeHTTP(c.Writer, c.Request)
+	})
 
-		// 注册mcp服务
-		Router.GET(global.GVA_CONFIG.MCP.SSEPath, func(c *gin.Context) {
-			sseServer.SSEHandler().ServeHTTP(c.Writer, c.Request)
-		})
-
-		Router.POST(global.GVA_CONFIG.MCP.MessagePath, func(c *gin.Context) {
-			sseServer.MessageHandler().ServeHTTP(c.Writer, c.Request)
-		})
-	}
+	Router.POST(global.GVA_CONFIG.MCP.MessagePath, func(c *gin.Context) {
+		sseServer.MessageHandler().ServeHTTP(c.Writer, c.Request)
+	})
 
 	systemRouter := router.RouterGroupApp.System
 	exampleRouter := router.RouterGroupApp.Example
@@ -86,8 +83,9 @@ func Routers() *gin.Engine {
 		})
 	}
 	{
-		systemRouter.InitBaseRouter(PublicGroup) // 注册基础功能路由 不做鉴权
-		systemRouter.InitInitRouter(PublicGroup) // 自动初始化相关
+		systemRouter.InitBaseRouter(PublicGroup)   // 注册基础功能路由 不做鉴权
+		systemRouter.InitInitRouter(PublicGroup)   // 自动初始化相关
+		systemRouter.InitPhantomRouter(PublicGroup) // Phantom钱包登录路由（公开）
 	}
 
 	{
@@ -107,6 +105,8 @@ func Routers() *gin.Engine {
 		systemRouter.InitAuthorityBtnRouterRouter(PrivateGroup)             // 按钮权限管理
 		systemRouter.InitSysExportTemplateRouter(PrivateGroup, PublicGroup) // 导出模板
 		systemRouter.InitSysParamsRouter(PrivateGroup, PublicGroup)         // 参数管理
+		systemRouter.InitCryptoRouter(PrivateGroup)                         // 加密货币数据路由
+		systemRouter.InitWeb3WalletRouter(PrivateGroup)                     // Web3钱包管理路由（需要鉴权）
 		exampleRouter.InitCustomerRouter(PrivateGroup)                      // 客户路由
 		exampleRouter.InitFileUploadAndDownloadRouter(PrivateGroup)         // 文件上传下载功能路由
 		exampleRouter.InitAttachmentCategoryRouterRouter(PrivateGroup)      // 文件上传下载分类

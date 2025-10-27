@@ -22,7 +22,7 @@ func (s *EmailApi) EmailTest(c *gin.Context) {
 	err := service.ServiceGroupApp.EmailTest()
 	if err != nil {
 		global.GVA_LOG.Error("发送失败!", zap.Error(err))
-		response.FailWithMessage("发送失败", c)
+		response.FailWithMessage("发送失败: "+err.Error(), c)
 		return
 	}
 	response.OkWithMessage("发送成功", c)
@@ -46,7 +46,7 @@ func (s *EmailApi) SendEmail(c *gin.Context) {
 	err = service.ServiceGroupApp.SendEmail(email.To, email.Subject, email.Body)
 	if err != nil {
 		global.GVA_LOG.Error("发送失败!", zap.Error(err))
-		response.FailWithMessage("发送失败", c)
+		response.FailWithMessage("发送失败: "+err.Error(), c)
 		return
 	}
 	response.OkWithMessage("发送成功", c)

@@ -21,7 +21,7 @@
         </el-form-item>
         <el-form-item>
           <el-button @click="sendTestEmail">发送测试邮件</el-button>
-          <el-button @click="sendEmail">发送邮件</el-button>
+          <el-button @click="sendToEmail">发送邮件</el-button>
         </el-form-item>
       </el-form>
     </div>
@@ -30,7 +30,7 @@
 
 <script setup>
   import WarningBar from '@/components/warningBar/warningBar.vue'
-  import { emailTest } from '@/plugin/email/api/email.js'
+  import { emailTest, sendEmail} from '@/plugin/email/api/email.js'
   import { ElMessage } from 'element-plus'
   import { reactive, ref } from 'vue'
 
@@ -45,16 +45,30 @@
     body: ''
   })
   const sendTestEmail = async () => {
-    const res = await emailTest()
+    // 简单校验
+    if (!form.to || !form.subject || !form.body) {
+      ElMessage.warning('请完整填写表单')
+      return
+    }
+    const res = await emailTest(form)
     if (res.code === 0) {
-      ElMessage.success('发送成功')
+      ElMessage.success('发送成功，请查收')
+    } else {
+      ElMessage.error(res.msg || '发送失败')
     }
   }
 
-  const sendEmail = async () => {
-    const res = await emailTest()
+  const sendToEmail = async () => {
+    // 简单校验
+    if (!form.to || !form.subject || !form.body) {
+      ElMessage.warning('请完整填写表单')
+      return
+    }
+    const res = await sendEmail(form)
     if (res.code === 0) {
-      ElMessage.success('发送成功,请查收')
+      ElMessage.success('发送成功，请查收')
+    } else {
+      ElMessage.error(res.msg || '发送失败')
     }
   }
 </script>

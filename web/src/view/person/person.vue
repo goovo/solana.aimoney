@@ -54,16 +54,10 @@
                 >
                   <div class="flex items-center gap-2">
                     <el-icon><location /></el-icon>
-                    <span>中国·北京市·朝阳区</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <el-icon><office-building /></el-icon>
-                    <span>北京翻转极光科技有限公司</span>
-                  </div>
-                  <div class="flex items-center gap-2">
-                    <el-icon><user /></el-icon>
-                    <span>技术部·前端事业群</span>
-                  </div>
+                    <!-- 将静态地址替换为动态IP归属地显示 -->
+                    <span>来自{{ ipArea }}的web3玩家</span>
+                    <span style="color:red"> 本系统除了交易报表、收益报表时间是东八区时间外，其他时间是格林威冶时间。</span>
+                  </div> 
                 </div>
               </div>
 
@@ -145,11 +139,11 @@
             技能特长
           </h2>
           <div class="flex flex-wrap gap-2">
-            <el-tag effect="plain" type="success">GoLang</el-tag>
-            <el-tag effect="plain" type="warning">JavaScript</el-tag>
-            <el-tag effect="plain" type="danger">Vue</el-tag>
-            <el-tag effect="plain" type="info">Gorm</el-tag>
-            <el-button link class="text-sm">
+            <el-tag effect="plain" type="success">搞钱达人</el-tag>
+            <el-tag effect="plain" type="warning">AI玩家</el-tag>
+            <el-tag effect="plain" type="danger">Web3</el-tag>
+            <el-tag effect="plain" type="info">加密行业深度参与者</el-tag>
+            <el-button link class="text-sm" style="display: none;">
               <el-icon><plus /></el-icon>
               添加技能
             </el-button>
@@ -173,33 +167,33 @@
                   <div
                     class="text-2xl lg:text-4xl font-bold text-blue-500 mb-2"
                   >
-                    138
+                    {{ stat.apiCnt }}
                   </div>
-                  <div class="text-gray-500 text-sm">项目参与</div>
+                  <div class="text-gray-500 text-sm">开通API数量</div>
                 </div>
                 <div class="stat-card">
                   <div
                     class="text-2xl lg:text-4xl font-bold text-green-500 mb-2"
                   >
-                    2.3k
+                    {{ stat.tradeCnt }}
                   </div>
-                  <div class="text-gray-500 text-sm">代码提交</div>
+                  <div class="text-gray-500 text-sm">交易笔数</div>
                 </div>
                 <div class="stat-card">
                   <div
                     class="text-2xl lg:text-4xl font-bold text-purple-500 mb-2"
                   >
-                    95%
+                    {{ winRate() }}%
                   </div>
-                  <div class="text-gray-500 text-sm">任务完成</div>
+                  <div class="text-gray-500 text-sm">胜率</div>
                 </div>
                 <div class="stat-card">
                   <div
                     class="text-2xl lg:text-4xl font-bold text-yellow-500 mb-2"
                   >
-                    12
+                    {{ stat.getTotal | 0.00 }}
                   </div>
-                  <div class="text-gray-500 text-sm">获得勋章</div>
+                  <div class="text-gray-500 text-sm">总收益</div>
                 </div>
               </div>
             </el-tab-pane>
@@ -357,8 +351,8 @@
 </template>
 
 <script setup>
-  import { setSelfInfo, changePassword } from '@/api/user.js'
-  import { reactive, ref, watch } from 'vue'
+  import { setSelfInfo, changePassword, getStat, getStep } from '@/api/user.js'
+  import { reactive, ref, watch, onMounted } from 'vue'
   import { ElMessage } from 'element-plus'
   import { useUserStore } from '@/pinia/modules/user'
   import SelectImage from '@/components/selectImage/selectImage.vue'
@@ -372,6 +366,16 @@
   const pwdModify = ref({})
   const nickName = ref('')
   const editFlag = ref(false)
+  // IP归属地（默认显示为“未知地区”）
+  const ipArea = ref('未知地区')
+
+  // 统计数据（默认值为0）
+  const stat = reactive({
+    apiCnt: 0,       // 开通API数量
+    tradeCnt: 0,     // 交易笔数
+    getCnt: 0,       // 赚钱交易笔数
+    getTotal: 0      // 总收益
+  })
 
   const rules = reactive({
     password: [
@@ -396,6 +400,62 @@
         trigger: 'blur'
       }
     ]
+  })
+
+  // 获取IP归属地的工具函数
+  const fetchIpArea = async () => {
+    // 优先使用 ip-api（支持中文语言参数）
+    try {
+      // 说明：此处使用原生fetch，避免全局axios拦截器附带鉴权头导致跨域被拒绝
+      const res = await fetch('https://ip-api.com/json/?lang=zh-CN', { method: 'GET' })
+      const data = await res.json()
+      if (data && data.status === 'success') {
+        const parts = [data.country, data.regionName, data.city].filter(Boolean)
+        ipArea.value = parts.join('·') || '未知地区'
+        return
+      }
+      throw new Error('ip-api 响应异常')
+    } catch (e) {
+      // 兜底使用 ipapi.co
+      try {
+        const res2 = await fetch('https://ipapi.co/json/', { method: 'GET' })
+        const d2 = await res2.json()
+        const parts2 = [d2.country_name, d2.region, d2.city].filter(Boolean)
+        ipArea.value = parts2.join('·') || '未知地区'
+      } catch (e2) {
+        // 最终兜底：保持默认“未知地区”
+        console.warn('获取IP归属地失败：', e2)
+      }
+    }
+  }
+
+  // 从后端获取统计数据
+  const fetchStat = async () => {
+    try {
+      const res = await getStat()
+      // 后端统一响应结构：{ code, data, msg }，其中 data.user 包含我们需要的字段
+      const u = res?.data?.user || {}
+      stat.apiCnt = Number(u.apiCnt || 0)
+      stat.tradeCnt = Number(u.tradeCnt || 0)
+      stat.getCnt = Number(u.getCnt || 0)
+      stat.getTotal = Number(u.getTotal || 0)
+    } catch (e) {
+      console.warn('获取统计信息失败：', e)
+    }
+  }
+
+  // 计算胜率（显示百分比，保留1位小数）
+  const winRate = () => {
+    if (!stat.tradeCnt) return 0
+    return ((stat.getCnt / stat.tradeCnt) * 100).toFixed(1)
+  }
+
+  // 组件挂载后发起请求获取IP归属地与个人统计
+  onMounted(() => {
+    fetchIpArea()
+    fetchStat()
+    // 新增：获取用户重要时间节点，并根据返回值动态渲染时间线
+    fetchStep()
   })
 
   const savePassword = async () => {
@@ -522,33 +582,102 @@
     }
   })
 
-  // 添加活动数据
-  const activities = [
+  // 活动数据改为响应式，便于后续动态替换与过滤
+  const activities = ref([
     {
       timestamp: '2024-01-10',
-      title: '完成项目里程碑',
-      content: '成功完成第三季度主要项目开发任务，获得团队一致好评',
+      title: '完成Web3投资人身份',
+      content: '成功完成加密行业参与人身份识别，获得平台优质服务',
       type: 'primary'
     },
     {
       timestamp: '2024-01-11',
-      title: '代码审核完成',
-      content: '完成核心模块代码审核，提出多项改进建议并获采纳',
+      title: '评估完成',
+      content: '完成风险测评，掌控搞钱的节奏',
       type: 'success'
     },
     {
       timestamp: '2024-01-12',
-      title: '技术分享会',
-      content: '主持团队技术分享会，分享前端性能优化经验',
+      title: '交易API审核完成',
+      content: 'API验证通过，平台将带您一起搞钱',
       type: 'warning'
     },
     {
       timestamp: '2024-01-13',
-      title: '新功能上线',
-      content: '成功上线用户反馈的新特性，显著提升用户体验',
+      title: '第一笔交易完成',
+      content: '登堂入室，从此有了自己的资金增长通道',
       type: 'danger'
     }
-  ]
+  ])
+  
+  // 新增：从后端获取用户关键时间节点并替换/隐藏时间线
+  // 约定：
+  // - user.registerTime 用于替换 '2024-01-10'
+  // - user.riskTime     用于替换 '2024-01-11'（为空则隐藏后续三项：11/12/13）
+  // - user.apiTime      用于替换 '2024-01-12'（为空则隐藏后续两项：12/13）
+  // - user.tradeTime    用于替换 '2024-01-13'（为空则隐藏 13）
+  const fetchStep = async () => {
+    try {
+      const res = await getStep()
+      const u = res?.data?.user || {}
+
+      // 简单格式化成 YYYY-MM-DD
+      const fmt = (s) => {
+        if (!s) return ''
+        const d = String(s)
+        return d.length >= 10 ? d.slice(0, 10) : d
+      }
+
+      const reg = fmt(u.registerTime)
+      const risk = fmt(u.riskTime)
+      const api = fmt(u.apiTime)
+      const trade = fmt(u.tradeTime)
+
+      const list = []
+      // 注册时间：默认展示（后端已做兜底查询）
+      list.push({
+        timestamp: reg || '2024-01-10',
+        title: '完成Web3投资人身份',
+        content: '成功完成加密行业参与人身份识别，获得平台优质服务',
+        type: 'primary'
+      })
+
+      // 风险评估时间为空：隐藏 2024-01-11/12/13 对应项
+      if (risk) {
+        list.push({
+          timestamp: risk,
+          title: '评估完成',
+          content: '完成风险测评，掌控搞钱的节奏',
+          type: 'success'
+        })
+
+        // API 审核时间为空：隐藏 2024-01-12/13 对应项
+        if (api) {
+          list.push({
+            timestamp: api,
+            title: '交易API审核完成',
+            content: 'API验证通过，平台将带您一起搞钱',
+            type: 'warning'
+          })
+
+          // 第一笔交易时间为空：隐藏 2024-01-13 对应项
+          if (trade) {
+            list.push({
+              timestamp: trade,
+              title: '第一笔交易完成',
+              content: '登堂入室，从此有了自己的资金增长通道',
+              type: 'danger'
+            })
+          }
+        }
+      }
+
+      activities.value = list
+    } catch (e) {
+      console.warn('获取步骤时间失败：', e)
+      // 失败情况下保留默认占位数据
+    }
+  }
 </script>
 
 <style lang="scss">

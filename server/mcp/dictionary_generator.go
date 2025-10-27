@@ -21,13 +21,6 @@ func init() {
 // DictionaryOptionsGenerator 字典选项生成器
 type DictionaryOptionsGenerator struct{}
 
-// DictionaryOption 字典选项结构
-type DictionaryOption struct {
-	Label string `json:"label"`
-	Value string `json:"value"`
-	Sort  int    `json:"sort"`
-}
-
 // DictionaryGenerateRequest 字典生成请求
 type DictionaryGenerateRequest struct {
 	DictType    string             `json:"dictType"`    // 字典类型
@@ -146,11 +139,11 @@ func (d *DictionaryOptionsGenerator) InputSchema() map[string]interface{} {
 			},
 			"dictName": map[string]interface{}{
 				"type":        "string",
-				"description": "字典名称，必填，默认根据fieldDesc生成",
+				"description": "字典名称，可选，默认根据fieldDesc生成",
 			},
 			"description": map[string]interface{}{
 				"type":        "string",
-				"description": "字典描述，必填",
+				"description": "字典描述，可选",
 			},
 		},
 		"required": []string{"dictType", "fieldDesc", "options"},
@@ -187,6 +180,7 @@ func (d *DictionaryOptionsGenerator) Handle(ctx context.Context, request mcp.Cal
 		return nil, errors.New("options 不能为空")
 	}
 
+	// 可选参数
 	dictName, _ := args["dictName"].(string)
 	description, _ := args["description"].(string)
 

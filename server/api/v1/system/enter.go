@@ -23,6 +23,9 @@ type ApiGroup struct {
 	AutoCodeTemplateApi
 	SysParamsApi
 	SysVersionApi
+	InviteApi
+	CryptoApi
+	Web3WalletApi
 }
 
 var (

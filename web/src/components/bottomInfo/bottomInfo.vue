@@ -9,22 +9,13 @@
     <div class="text-center">
       <span class="mr-1">Powered by</span>
       <span>
-        <a
-          class="font-bold text-active"
-          href="https://github.com/flipped-aurora/gin-vue-admin"
-          >Gin-Vue-Admin</a
-        >
+        AiStrategy
       </span>
     </div>
     <slot />
     <div class="text-center">
       <span class="mr-1">Copyright</span>
-      <span>
-        <a
-          class="font-bold text-active"
-          href="https://github.com/flipped-aurora"
-          >flipped-aurora团队</a
-        >
+      <span> AiMoney Team 
       </span>
     </div>
   </div>

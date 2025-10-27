@@ -18,6 +18,7 @@ type ServiceGroup struct {
 	SysExportTemplateService
 	SysParamsService
 	SysVersionService
+	Web3WalletService
 	AutoCodePlugin   autoCodePlugin
 	AutoCodePackage  autoCodePackage
 	AutoCodeHistory  autoCodeHistory

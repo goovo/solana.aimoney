@@ -16,6 +16,9 @@ type Register struct {
 	AuthorityIds []uint `json:"authorityIds" swaggertype:"string" example:"[]uint 角色id"`
 	Phone        string `json:"phone" example:"电话号码"`
 	Email        string `json:"email" example:"电子邮箱"`
+	EmailCode    string `json:"emailCode" example:"邮箱验证码"` // 新增：邮箱验证码，用于公开注册校验
+	PhoneCode   string `json:"phoneCode" example:"手机验证码"` // 新增：手机验证码，用于公开注册校验
+	ReferrerCode string `json:"referrerCode" example:"推荐码"` // 推荐码
 }
 
 // Login User login structure

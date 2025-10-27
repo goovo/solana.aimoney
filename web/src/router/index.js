@@ -16,6 +16,20 @@ const routes = [
     component: () => import('@/view/login/index.vue')
   },
   {
+    path: '/register',
+    name: 'Register',
+    component: () => import('@/view/register/index.vue')
+  },
+  {
+    path: '/web3-dashboard',
+    name: 'Web3Dashboard',
+    meta: {
+      title: 'Web3大观园',
+      client: true
+    },
+    component: () => import('@/view/web3-dashboard/index.vue')
+  },
+  {
     path: '/scanUpload',
     name: 'ScanUpload',
     meta: {

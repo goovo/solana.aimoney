@@ -24,7 +24,6 @@
 <script setup>
   import { useUserStore } from '@/pinia/modules/user'
   import { useRouter } from 'vue-router'
-  import { emitter } from '@/utils/bus'
 
   defineOptions({
     name: 'Error'
@@ -33,17 +32,6 @@
   const userStore = useUserStore()
   const router = useRouter()
   const toDashboard = () => {
-    try {
-      router.push({ name: userStore.userInfo.authority.defaultRouter })
-    } catch (error) {
-        emitter.emit('show-error', {
-        code: '401',
-        message: "检测到其他用户修改了路由权限，请重新登录",
-        fn: () => {
-          userStore.ClearStorage()
-          router.push({ name: 'Login', replace: true })
-        }
-      })
-    }
+    router.push({ name: userStore.userInfo.authority.defaultRouter })
   }
 </script>

@@ -9,11 +9,9 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 import VueFilePathPlugin from './vitePlugin/componentName/index.js'
 import { svgBuilder } from 'vite-auto-import-svg'
 import { AddSecret } from './vitePlugin/secret'
-import UnoCSS from '@unocss/vite'
-
 // @see https://cn.vitejs.dev/config/
 export default ({ mode }) => {
-  AddSecret('')
+  AddSecret('0e487a8286f61ae9a31d55d3340d58f6')
   const NODE_ENV = mode || 'development'
   const envFiles = [`.env.${NODE_ENV}`]
   for (const file of envFiles) {
@@ -66,9 +64,18 @@ export default ({ mode }) => {
       }
     },
     server: {
-      // 如果使用docker-compose开发模式，设置为false
+      // 中文注释：允许来自指定域名的访问（可根据需要增减）
+      allowedHosts: [
+        'admin.beta.jujing.me'
+      ],
+      // 中文注释：监听所有网卡，便于局域网访问
+      host: '0.0.0.0',
+      // 中文注释：优先使用环境变量端口，默认为 8080
+      port: Number(process.env.VITE_CLI_PORT) || 8080,
+      // 中文注释：当端口被占用时，自动尝试其他可用端口
+      strictPort: false,
+      // 中文注释：启动后自动打开浏览器
       open: true,
-      port: process.env.VITE_CLI_PORT,
       proxy: {
         // 把key的路径代理到target位置
         // detail: https://cli.vuejs.org/config/#devserver-proxy
@@ -113,9 +120,12 @@ export default ({ mode }) => {
       vuePlugin(),
       svgBuilder(['./src/plugin/','./src/assets/icons/'],base, outDir,'assets', NODE_ENV),
       [Banner(`\n Build based on gin-vue-admin \n Time : ${timestamp}`)],
-      VueFilePathPlugin('./src/pathInfo.json'),
-      UnoCSS()
+      VueFilePathPlugin('./src/pathInfo.json')
     ]
   }
   return config
 }
+
+
+
+

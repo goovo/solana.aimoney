@@ -3,9 +3,6 @@ package system
 import (
 	"errors"
 
-	"github.com/flipped-aurora/gin-vue-admin/server/model/system/request"
-	"github.com/gin-gonic/gin"
-
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/system"
 	"gorm.io/gorm"
@@ -63,11 +60,10 @@ func (dictionaryService *DictionaryService) DeleteSysDictionary(sysDictionary sy
 func (dictionaryService *DictionaryService) UpdateSysDictionary(sysDictionary *system.SysDictionary) (err error) {
 	var dict system.SysDictionary
 	sysDictionaryMap := map[string]interface{}{
-		"Name":     sysDictionary.Name,
-		"Type":     sysDictionary.Type,
-		"Status":   sysDictionary.Status,
-		"Desc":     sysDictionary.Desc,
-		"ParentID": sysDictionary.ParentID,
+		"Name":   sysDictionary.Name,
+		"Type":   sysDictionary.Type,
+		"Status": sysDictionary.Status,
+		"Desc":   sysDictionary.Desc,
 	}
 	err = global.GVA_DB.Where("id = ?", sysDictionary.ID).First(&dict).Error
 	if err != nil {
@@ -79,14 +75,6 @@ func (dictionaryService *DictionaryService) UpdateSysDictionary(sysDictionary *s
 			return errors.New("存在相同的type，不允许创建")
 		}
 	}
-
-	// 检查是否会形成循环引用
-	if sysDictionary.ParentID != nil && *sysDictionary.ParentID != 0 {
-		if err := dictionaryService.checkCircularReference(sysDictionary.ID, *sysDictionary.ParentID); err != nil {
-			return err
-		}
-	}
-
 	err = global.GVA_DB.Model(&dict).Updates(sysDictionaryMap).Error
 	return err
 }
@@ -105,7 +93,7 @@ func (dictionaryService *DictionaryService) GetSysDictionary(Type string, Id uin
 		flag = *status
 	}
 	err = global.GVA_DB.Where("(type = ? OR id = ?) and status = ?", Type, Id, flag).Preload("SysDictionaryDetails", func(db *gorm.DB) *gorm.DB {
-		return db.Where("status = ? and deleted_at is null", true).Order("sort")
+		return db.Where("status = ?", true).Order("sort")
 	}).First(&sysDictionary).Error
 	return
 }
@@ -117,38 +105,8 @@ func (dictionaryService *DictionaryService) GetSysDictionary(Type string, Id uin
 //@param: info request.SysDictionarySearch
 //@return: err error, list interface{}, total int64
 
-func (dictionaryService *DictionaryService) GetSysDictionaryInfoList(c *gin.Context, req request.SysDictionarySearch) (list interface{}, err error) {
+func (dictionaryService *DictionaryService) GetSysDictionaryInfoList() (list interface{}, err error) {
 	var sysDictionarys []system.SysDictionary
-	query := global.GVA_DB.WithContext(c)
-	if req.Name != "" {
-		query = query.Where("name LIKE ? OR type LIKE ?", "%"+req.Name+"%", "%"+req.Name+"%")
-	}
-	// 预加载子字典
-	query = query.Preload("Children")
-	err = query.Find(&sysDictionarys).Error
+	err = global.GVA_DB.Find(&sysDictionarys).Error
 	return sysDictionarys, err
-}
-
-// checkCircularReference 检查是否会形成循环引用
-func (dictionaryService *DictionaryService) checkCircularReference(currentID uint, parentID uint) error {
-	if currentID == parentID {
-		return errors.New("不能将字典设置为自己的父级")
-	}
-
-	// 递归检查父级链条
-	var parent system.SysDictionary
-	err := global.GVA_DB.Where("id = ?", parentID).First(&parent).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil // 父级不存在，允许设置
-		}
-		return err
-	}
-
-	// 如果父级还有父级，继续检查
-	if parent.ParentID != nil && *parent.ParentID != 0 {
-		return dictionaryService.checkCircularReference(currentID, *parent.ParentID)
-	}
-
-	return nil
 }

@@ -67,6 +67,11 @@ func (h MysqlInitHandler) EnsureDB(ctx context.Context, conf *request.InitDB) (n
 	}), &gorm.Config{DisableForeignKeyConstraintWhenMigrating: true}); err != nil {
 		return ctx, err
 	}
+	// >>>>>>>  新增：会话级时区设为 +08  2025.09.30 16:08 <<<<<<<<
+	if sqlDB, e := db.DB(); e == nil {
+		_, _ = sqlDB.Exec("SET time_zone = '+08:00'")
+	}
+	// >>>>>>>  新增结束  <<<<<<<<
 	global.GVA_CONFIG.AutoCode.Root, _ = filepath.Abs("..")
 	next = context.WithValue(next, "db", db)
 	return next, err

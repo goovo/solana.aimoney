@@ -22,6 +22,84 @@ export const captcha = () => {
   })
 }
 
+// @Summary 用户注册（公开注册）
+// @Produce  application/json
+// @Param data body {password:"string",email:"string",emailCode:"string",phone:"string",phoneCode:"string",authorityId:number,authorityIds:number[]} true "公开注册，支持手机或邮箱验证码注册"
+// @Router /base/register [post]
+export const publicRegister = (data) => {
+  // 使用公开注册接口，避免与管理员创建用户接口冲突
+  return service({
+    url: '/base/register',
+    method: 'post',
+    data
+  })
+}
+
+// @Summary 发送邮箱验证码（公开）
+// @Produce  application/json
+// @Param data body {email:"string",captchaId:"string",captcha:"string"} true "邮箱地址和图形验证码"
+// @Router /base/sendEmailCode [post]
+export const sendEmailCode = (data) => {
+  // 公开发送邮箱验证码接口，需要图形验证码验证
+  return service({
+    url: '/base/sendEmailCode',
+    method: 'post',
+    data
+  })
+}
+
+// @Summary 发送手机验证码（公开）
+// @Produce  application/json
+// @Param data body {phone:"string",captchaId:"string",captcha:"string"} true "手机号和图形验证码"
+// @Router /base/sendPhoneCode [post]
+export const sendPhoneCode = (data) => {
+  // 公开发送手机验证码接口，需要图形验证码验证
+  return service({
+    url: '/base/sendPhoneCode',
+    method: 'post',
+    data
+  })
+}
+
+// @Summary 检查用户名是否可用（公开）
+// @Produce  application/json
+// @Param data body {username:"string"} true "要检查的用户名"
+// @Router /base/checkUsername [post]
+export const checkUsername = (data) => {
+  // 公开检查用户名可用性接口
+  return service({
+    url: '/base/checkUsername',
+    method: 'post',
+    data
+  })
+}
+
+// @Summary 检查手机号是否可用（公开）
+// @Produce  application/json
+// @Param data body {phone:"string"} true "要检查的手机号"
+// @Router /base/checkPhone [post]
+export const checkPhone = (data) => {
+  // 公开检查手机号可用性接口
+  return service({
+    url: '/base/checkPhone',
+    method: 'post',
+    data
+  })
+}
+
+// @Summary 检查邮箱是否可用（公开）
+// @Produce  application/json
+// @Param data body {email:"string"} true "要检查的邮箱"
+// @Router /base/checkEmail [post]
+export const checkEmail = (data) => {
+  // 公开检查邮箱可用性接口
+  return service({
+    url: '/base/checkEmail',
+    method: 'post',
+    data
+  })
+}
+
 // @Summary 用户注册
 // @Produce  application/json
 // @Param data body {username:"string",password:"string"}
@@ -172,6 +250,21 @@ export const getUserInfo = () => {
   })
 }
 
+export const getUser = (userId) => {
+  return service({
+    url: '/user/getUser/'+userId,
+    method: 'get'
+  })
+}
+
+export const getRisk = () => {
+  return service({
+    url: '/user/getRisk',
+    method: 'get'
+  })
+}
+
+
 export const resetPassword = (data) => {
   return service({
     url: '/user/resetPassword',
@@ -179,3 +272,22 @@ export const resetPassword = (data) => {
     data: data
   })
 }
+
+// @Summary 获取个人统计信息（API数量、交易笔数、胜率、总收益）
+// @Router /user/getStat [get]
+export const getStat = () => {
+  return service({
+    url: '/user/getStat',
+    method: 'get'
+  })
+}
+
+// @Summary 获取用户关键步骤时间（注册/风评/API审核/首单）
+// @Router /user/getStep [get]
+export const getStep = () => {
+  return service({
+    url: '/user/getStep',
+    method: 'get'
+  })
+}
+

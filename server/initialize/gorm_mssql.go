@@ -28,9 +28,7 @@ func GormMssql() *gorm.DB {
 		DSN:               m.Dsn(), // DSN data source name
 		DefaultStringSize: 191,     // string 类型字段的默认长度
 	}
-	// 数据库配置
-	general := m.GeneralDB
-	if db, err := gorm.Open(sqlserver.New(mssqlConfig), internal.Gorm.Config(general)); err != nil {
+	if db, err := gorm.Open(sqlserver.New(mssqlConfig), internal.Gorm.Config(m.Prefix, m.Singular)); err != nil {
 		return nil
 	} else {
 		db.InstanceSet("gorm:table_options", "ENGINE="+m.Engine)
@@ -50,9 +48,7 @@ func GormMssqlByConfig(m config.Mssql) *gorm.DB {
 		DSN:               m.Dsn(), // DSN data source name
 		DefaultStringSize: 191,     // string 类型字段的默认长度
 	}
-	// 数据库配置
-	general := m.GeneralDB
-	if db, err := gorm.Open(sqlserver.New(mssqlConfig), internal.Gorm.Config(general)); err != nil {
+	if db, err := gorm.Open(sqlserver.New(mssqlConfig), internal.Gorm.Config(m.Prefix, m.Singular)); err != nil {
 		panic(err)
 	} else {
 		db.InstanceSet("gorm:table_options", "ENGINE=InnoDB")

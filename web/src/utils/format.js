@@ -18,58 +18,24 @@ export const formatDate = (time) => {
   }
 }
 
+export const formatNumber = (num) => {
+  if (num === null || num === undefined || num === '') return '0.00'
+  return Number(num).toFixed(2)
+}
+
 export const filterDict = (value, options) => {
-  // 递归查找函数
-  const findInOptions = (opts, targetValue) => {
-    if (!opts || !Array.isArray(opts)) return null
-    
-    for (const item of opts) {
-      if (item.value === targetValue) {
-        return item
-      }
-      
-      if (item.children && Array.isArray(item.children)) {
-        const found = findInOptions(item.children, targetValue)
-        if (found) return found
-      }
-    }
-    
-    return null
-  }
-  
-  const rowLabel = findInOptions(options, value)
-  return rowLabel && rowLabel.label
+  const rowLabel = options && options.filter((item) => item.value === value)
+  return rowLabel && rowLabel[0] && rowLabel[0].label
 }
 
 export const filterDataSource = (dataSource, value) => {
-  // 递归查找函数
-  const findInDataSource = (data, targetValue) => {
-    if (!data || !Array.isArray(data)) return null
-    
-    for (const item of data) {
-      // 检查当前项是否匹配
-      if (item.value === targetValue) {
-        return item
-      }
-      
-      // 如果有children属性，递归查找
-      if (item.children && Array.isArray(item.children)) {
-        const found = findInDataSource(item.children, targetValue)
-        if (found) return found
-      }
-    }
-    
-    return null
-  }
-  
   if (Array.isArray(value)) {
     return value.map((item) => {
-      const rowLabel = findInDataSource(dataSource, item)
+      const rowLabel = dataSource && dataSource.find((i) => i.value === item)
       return rowLabel?.label
     })
   }
-  
-  const rowLabel = findInDataSource(dataSource, value)
+  const rowLabel = dataSource && dataSource.find((item) => item.value === value)
   return rowLabel?.label
 }
 

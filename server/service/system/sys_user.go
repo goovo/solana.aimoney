@@ -3,6 +3,7 @@ package system
 import (
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/flipped-aurora/gin-vue-admin/server/model/common"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/flipped-aurora/gin-vue-admin/server/global"
 	"github.com/flipped-aurora/gin-vue-admin/server/model/system"
+	systemRes "github.com/flipped-aurora/gin-vue-admin/server/model/system/response"
 	"github.com/flipped-aurora/gin-vue-admin/server/utils"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
@@ -50,7 +52,8 @@ func (userService *UserService) Login(u *system.SysUser) (userInter *system.SysU
 	}
 
 	var user system.SysUser
-	err = global.GVA_DB.Where("username = ?", u.Username).Preload("Authorities").Preload("Authority").First(&user).Error
+	// 支持用户名、手机号、邮箱登录
+	err = global.GVA_DB.Where("username = ? OR phone = ? OR email = ?", u.Username, u.Username, u.Username).Preload("Authorities").Preload("Authority").First(&user).Error
 	if err == nil {
 		if ok := utils.BcryptCheck(u.Password, user.Password); !ok {
 			return nil, errors.New("密码错误")
@@ -109,7 +112,7 @@ func (userService *UserService) GetUserInfoList(info systemReq.GetUserList) (lis
 	if err != nil {
 		return
 	}
-	err = db.Limit(limit).Offset(offset).Preload("Authorities").Preload("Authority").Find(&userList).Error
+	err = db.Limit(limit).Offset(offset).Preload("Authorities").Preload("Authority").Order("id desc").Find(&userList).Error
 	return userList, total, err
 }
 
@@ -315,4 +318,76 @@ func (userService *UserService) FindUserByUuid(uuid string) (user *system.SysUse
 func (userService *UserService) ResetPassword(ID uint, password string) (err error) {
 	err = global.GVA_DB.Model(&system.SysUser{}).Where("id = ?", ID).Update("password", utils.BcryptHash(password)).Error
 	return err
+}
+
+//@author: [piexlmax](https://github.com/piexlmax)
+//@function: GetUserReferralCount
+//@description: 获取用户推荐人数
+//@param: inviteCode string
+//@return: count int64, err error
+
+func (userService *UserService) GetUserReferralCount(inviteCode string) (count int64, err error) {
+	err = global.GVA_DB.Model(&system.SysUser{}).Where("referrer_code = ?", inviteCode).Count(&count).Error
+	return count, err
+}
+
+//@author: [piexlmax](https://github.com/piexlmax)
+//@function: GetUserReferrals
+//@description: 获取用户推荐列表
+//@param: inviteCode string, page int, pageSize int, keyword string
+//@return: list []systemRes.ReferralUserInfo, total int64, err error
+
+func (userService *UserService) GetUserReferrals(inviteCode string, page int, pageSize int, keyword string) (list []systemRes.ReferralUserInfo, total int64, err error) {
+	db := global.GVA_DB.Model(&system.SysUser{}).Where("referrer_code = ?", inviteCode)
+
+	// 如果有关键词，添加搜索条件
+	if keyword != "" {
+		db = db.Where("nick_name LIKE ? OR username LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+	}
+
+	// 获取总数
+	err = db.Count(&total).Error
+	if err != nil {
+		return list, total, err
+	}
+
+	// 获取分页数据
+	err = db.Select("id, nick_name, username, created_at, phone, email").
+		Limit(pageSize).
+		Offset((page - 1) * pageSize).
+		Order("created_at DESC").
+		Find(&list).Error
+
+	// TODO: 需要根据实际情况获取投资信息
+	// 这里暂时设置默认值
+	for i := range list {
+		list[i].HasInvested = false
+		list[i].InvestTime = nil
+		// 手机号和邮箱脱敏处理
+		if list[i].Phone != "" && len(list[i].Phone) >= 7 {
+			list[i].Phone = list[i].Phone[:3] + "****" + list[i].Phone[7:]
+		}
+		if list[i].Email != "" && strings.Contains(list[i].Email, "@") {
+			parts := strings.Split(list[i].Email, "@")
+			if len(parts[0]) > 3 {
+				list[i].Email = parts[0][:3] + "****@" + parts[1]
+			} else {
+				list[i].Email = "****@" + parts[1]
+			}
+		}
+	}
+
+	return list, total, err
+}
+
+//@author: [piexlmax](https://github.com/piexlmax)
+//@function: CheckInviteCodeExists
+//@description: 检查邀请码是否存在
+//@param: inviteCode string
+//@return: exists bool, err error
+
+func (userService *UserService) CheckInviteCodeExists(inviteCode string) (exists bool, err error) {
+	var count int64
+	err = global.GVA_DB.Model(&system.SysUser{}).Where("invite_code = ?", inviteCode).Count(&count).Error
+	return count > 0, err
 }

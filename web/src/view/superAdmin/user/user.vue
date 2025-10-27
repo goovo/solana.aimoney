@@ -50,6 +50,14 @@
         />
         <el-table-column
           align="left"
+          label="注册时间"
+          min-width="150"
+          prop="CreatedAt"
+        >
+          <template #default="scope">{{ formatDate(scope.row.CreatedAt) }}</template>
+        </el-table-column>
+        <el-table-column
+          align="left"
           label="手机号"
           min-width="180"
           prop="phone"
@@ -269,10 +277,16 @@
   import { ElMessage, ElMessageBox } from 'element-plus'
   import SelectImage from '@/components/selectImage/selectImage.vue'
   import { useAppStore } from "@/pinia";
+  import dayjs from 'dayjs'
 
   defineOptions({
     name: 'User'
   })
+
+  function formatDate(val) {
+    if (!val) return ''
+    return dayjs(val).format('YYYY-MM-DD HH:mm:ss')
+  }
 
   const appStore = useAppStore()
 
